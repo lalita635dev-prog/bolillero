@@ -1,97 +1,89 @@
-const machine = document.getElementById("machine");
-const ballsContainer = document.getElementById("balls");
-const result = document.getElementById("result");
-const historyDiv = document.getElementById("history");
+let isSpinning = false;
+let velocity = 0;
+let ballsPhysics = [];
 
-let balls = [];
-let drawn = [];
+function initPhysics() {
+  const total = parseInt(totalBalls.value);
 
-function initBalls() {
-  ballsContainer.innerHTML = "";
-  balls = [];
-  drawn = [];
-  historyDiv.innerHTML = "";
-  result.innerHTML = "";
-
-  const total = parseInt(document.getElementById("totalBalls").value);
+  ballsPhysics = [];
 
   for (let i = 1; i <= total; i++) {
-    balls.push(i);
-
-    const ball = document.createElement("div");
-    ball.className = "ball";
-    ball.innerText = i;
-
-    randomPosition(ball);
-    ballsContainer.appendChild(ball);
+    ballsPhysics.push({
+      id: i,
+      x: Math.random() * 200,
+      y: Math.random() * 200,
+      vx: (Math.random() - 0.5) * 5,
+      vy: (Math.random() - 0.5) * 5
+    });
   }
 }
 
-function randomPosition(el) {
-  const x = Math.random() * (machine.clientWidth - 40);
-  const y = Math.random() * (machine.clientHeight - 40);
-  el.style.transform = `translate(${x}px, ${y}px)`;
+function updatePhysics() {
+  ballsPhysics.forEach(b => {
+    b.x += b.vx;
+    b.y += b.vy;
+
+    // rebote simple
+    if (b.x < 0 || b.x > 260) b.vx *= -1;
+    if (b.y < 0 || b.y > 200) b.vy *= -1;
+
+    // fricción
+    b.vx *= 0.98;
+    b.vy *= 0.98;
+  });
 }
 
-function shuffleAnimation() {
-  const all = document.querySelectorAll(".ball");
+function renderBalls() {
+  ballsContainer.innerHTML = "";
 
-  for (let i = 0; i < 15; i++) {
-    setTimeout(() => {
-      all.forEach(b => randomPosition(b));
-    }, i * 50);
-  }
+  ballsPhysics.forEach(b => {
+    const el = document.createElement("div");
+    el.className = "ball";
+    el.innerText = b.id;
+    el.style.transform = `translate(${b.x}px, ${b.y}px)`;
+    ballsContainer.appendChild(el);
+  });
 }
 
-function drawBalls() {
-  const count = parseInt(document.getElementById("drawCount").value);
-
-  let available = balls.filter(b => !drawn.includes(b));
-
-  if (available.length === 0) {
-    result.innerText = "No quedan bolillas";
-    return;
+function loop() {
+  if (isSpinning) {
+    updatePhysics();
+    renderBalls();
   }
 
-  shuffleAnimation();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+function extractBall() {
+  const available = ballsPhysics.filter(b => !drawn.includes(b.id));
+
+  if (!available.length) return;
+
+  const selected = available[Math.floor(Math.random() * available.length)];
+
+  drawn.push(selected.id);
+
+  // animación salida
+  const el = [...document.querySelectorAll(".ball")]
+    .find(e => e.innerText == selected.id);
+
+  el.style.transition = "all 0.6s ease";
+  el.style.transform = "translate(120px, -80px) scale(1.5)";
+
+  result.innerText = selected.id;
+}
+
+machine.addEventListener("mousedown", () => {
+  isSpinning = true;
+  velocity = 5;
+});
+
+machine.addEventListener("mouseup", () => {
+  isSpinning = false;
 
   setTimeout(() => {
-    let selected = [];
-
-    for (let i = 0; i < count && available.length > 0; i++) {
-      const index = Math.floor(Math.random() * available.length);
-      const num = available.splice(index, 1)[0];
-      drawn.push(num);
-      selected.push(num);
-    }
-
-    result.innerText = selected.join(" - ");
-
-    selected.forEach(n => {
-      const span = document.createElement("span");
-      span.innerText = n;
-      historyDiv.appendChild(span);
-    });
-
-  }, 800);
-}
-
-// 🖱️ Drag hacia abajo
-let startY = 0;
-
-machine.addEventListener("mousedown", (e) => {
-  startY = e.clientY;
+    extractBall();
+  }, 500);
 });
-
-machine.addEventListener("mouseup", (e) => {
-  let diff = e.clientY - startY;
-
-  if (diff > 100) {
-    drawBalls();
-  }
-});
-
-document.getElementById("resetBtn").onclick = initBalls;
-
-// Init
-initBalls();

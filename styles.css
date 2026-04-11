@@ -95,3 +95,17 @@ button {
   font-size: 14px;
   color: #94a3b8;
 }
+
+.machine {
+  perspective: 800px;
+}
+
+.balls {
+  transform-style: preserve-3d;
+  animation: rotateDrum 3s linear infinite;
+}
+
+@keyframes rotateDrum {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
