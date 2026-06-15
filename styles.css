@@ -89,6 +89,11 @@ button {
   perspective: 800px;
 }
 
+@keyframes rotateDrum {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
 .machine {
   width: 300px;
   height: 250px;
@@ -97,8 +102,4 @@ button {
   overflow: hidden;
   position: relative;
   background: radial-gradient(circle, #1e293b, #020617);
-}
-
-.machine.hidden{
-  display:none;
 }
