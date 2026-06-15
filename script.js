@@ -16,13 +16,22 @@ const centerX = 150;
 const centerY = 120;
 const ballSize = 20;
 
+let extractionPending = false;
+
 // 🎱 INIT
 function initPhysics() {
+  document.getElementById("history").innerHTML = "";
+
+  machine.classList.remove("hidden");
+  spinVelocity = 0;
+  drumRotation = 0;
+  isSpinning = false;
+  extractionPending = false;
   const total = parseInt(totalBalls.value);
 
   ballsPhysics = [];
   drawn = [];
-  result.innerText = "";
+  result.innerText = "Esperando extracción...";
 
   for (let i = 1; i <= total; i++) {
     ballsPhysics.push({
@@ -141,12 +150,15 @@ function loop() {
   updatePhysics();
   renderBalls();
 
-  // 🎯 cuando se detiene → extraer
-  if (!isSpinning && spinVelocity === 0 && ballsPhysics.length > 0) {
+  if (
+    extractionPending &&
+    !isSpinning &&
+    spinVelocity === 0 &&
+    ballsPhysics.length > 0
+  ) {
+    extractionPending = false;
     extractBall();
-    spinVelocity = -1; // evitar múltiples extracciones
   }
-
   requestAnimationFrame(loop);
 }
 
@@ -154,6 +166,7 @@ loop();
 
 // 🎯 EXTRAER
 function extractBall() {
+  function extractBall() {
   const count = parseInt(document.getElementById("drawCount").value);
 
   let available = ballsPhysics.filter(b => !drawn.includes(b.id));
@@ -175,6 +188,14 @@ function extractBall() {
 
   result.innerText = selectedList.map(b => b.id).join(" - ");
 
+  const history = document.getElementById("history");
+
+  selectedList.forEach(ball => {
+    const span = document.createElement("span");
+    span.textContent = ball.id;
+    history.appendChild(span);
+  });
+
   selectedList.forEach(selected => {
     const el = [...document.querySelectorAll(".ball")]
       .find(e => e.innerText == selected.id);
@@ -186,14 +207,15 @@ function extractBall() {
     el.style.opacity = "0";
   });
   // eliminar de la física
-ballsPhysics = ballsPhysics.filter(b => !drawn.includes(b.id));
+  ballsPhysics = ballsPhysics.filter(b => !drawn.includes(b.id));
 }
 
 
 // 🖱️ INTERACCIÓN
 machine.addEventListener("mousedown", () => {
   isSpinning = true;
-  spinVelocity = 15; // impulso inicial
+  extractionPending = true;
+  spinVelocity = 15;
 });
 
 machine.addEventListener("mouseup", () => {
